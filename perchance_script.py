@@ -1,6 +1,8 @@
 import asyncio
+import json
 import os
 import re
+import sys
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 
@@ -184,7 +186,7 @@ async def wait_for_manual_challenge(page: Page, reason: str) -> bool:
     if HEADLESS:
         print(f"   ⚠️ {reason}")
         print("      Headless-режим: ручная проверка невозможна. Попробуй другой IP/прокси (PROXY_URL),")
-        print("      либо один раз пройди проверку локально (HEADLESS=0) и перенеси папку профиля.")
+        print("      либо один раз пройди проверку локально (python script.py --setup) и перенеси профиль.")
         return False
 
     print(f"   ⚠️ {reason}")
@@ -500,6 +502,39 @@ async def save_image(fr: Frame, src: str, path_base: str = "perchance_result") -
 
 
 # --------------------------------------------------------------------------- #
+#  Режим настройки профиля (--setup)
+# --------------------------------------------------------------------------- #
+
+async def setup_profile() -> None:
+    """Открывает видимый браузер с постоянным профилем. Проходишь капчу руками,
+    жмёшь Enter, профиль (cookies, cf_clearance) остаётся в USER_DATA_DIR."""
+    global HEADLESS
+    HEADLESS = False  # launch_context читает глобальную переменную
+
+    async with async_playwright() as p:
+        print("0. Запускаем браузер с окном...")
+        context = await launch_context(p)
+        page = context.pages[0] if context.pages else await context.new_page()
+        await apply_stealth(context, page)
+
+        print("1. Открываем страницу...")
+        await page.goto(URL, wait_until="domcontentloaded", timeout=60000)
+
+        print()
+        print(">>> Пройди капчу и Content Warning, дождись, пока загрузится генератор.")
+        await asyncio.to_thread(input, ">>> Нажми Enter, когда всё готово... ")
+
+        # Резервная копия cookies в JSON (пригодится для переноса на сервер)
+        cookies = await context.cookies()
+        with open("cookies.json", "w", encoding="utf-8") as f:
+            json.dump(cookies, f, ensure_ascii=False, indent=2)
+        print(f"✓ Профиль сохранён в {USER_DATA_DIR}")
+        print(f"✓ Cookies: cookies.json ({len(cookies)} шт.)")
+
+        await context.close()
+
+
+# --------------------------------------------------------------------------- #
 #  Основная логика
 # --------------------------------------------------------------------------- #
 
@@ -556,7 +591,7 @@ async def generate_perchance_image(prompt: str, style: str = "NSFW") -> str | No
                 if is_blocked(page):
                     print("   ❌ iframe генератора всё ещё заблокирован (403).")
                     print("      Что ещё можно сделать: отключить VPN/прокси, сменить сеть,")
-                    print("      удалить папку profile и пройти проверку заново вручную.")
+                    print("      удалить папку profile и пройти проверку заново (--setup).")
                 else:
                     print("   ❌ Элемента нет ни в одном фрейме за 30 сек")
                 await dump_frames(page, sel_input, tag="no_input")
@@ -677,6 +712,11 @@ async def generate_perchance_image(prompt: str, style: str = "NSFW") -> str | No
 
 
 if __name__ == "__main__":
+    # python script.py --setup  -> открыть окно, пройти капчу, сохранить профиль
+    if "--setup" in sys.argv:
+        asyncio.run(setup_profile())
+        sys.exit(0)
+
     result = asyncio.run(
         generate_perchance_image(
             prompt="beautiful woman, portrait, detailed",

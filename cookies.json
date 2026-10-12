@@ -1,0 +1,14 @@
+[
+  {
+    "name": "cf_clearance",
+    "value": "3uNBjc8sD0LDW2x6j1kDg7JmWAf6sqEDLyVhoBrMZxM-1791824020-1.2.1.1-A0guQgqhxmA_v9UXvCr6jPxCtgVTYe_d.hU3n96PVxe0nW0JiqgghkYHUI5O28RzE.wfQ2emCbCvY4y.YJphAWEKd4hqT6hAUdtTBauvvS4Zi2J3ShGMm_etOuTCkU6lkNQ1SdsdckHc0UxSjjyor9lzMmk0dyRJisHAWrIFqwN6uLdxhJr5kqtAA5EfYxEuTyLezdWfDR4C9ebvwOqMILPxdIS_6uvT5qUw1XiclRDhZBl3tPztP10_LNuwO9P5DH0oE2C6DQk1Pk7r7lwDjsBXuq7xVKp3T_ogzr9wKZDULhb.ux_5EAqxCA46TZf0nV8a0L4FF0CyXOr8hqMWAZXWuWH4oW4Z5HgDTXnt2yM",
+    "domain": ".perchance.org",
+    "path": "/",
+    "expires": 1823360021.346619,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None",
+    "partitionKey": "https://perchance.org",
+    "_crHasCrossSiteAncestor": false
+  }
+]
