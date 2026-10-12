@@ -4,6 +4,12 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 
+# На Render браузеры, скачанные на этапе сборки в ~/.cache, до запуска не доживают.
+# PLAYWRIGHT_BROWSERS_PATH=0 кладёт их внутрь пакета (в .venv), и они сохраняются.
+# ВАЖНО: тот же флаг должен стоять и в build command (см. инструкцию).
+if os.getenv("RENDER") and not os.getenv("PLAYWRIGHT_BROWSERS_PATH"):
+    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = "0"
+
 # patchright - форк Playwright с патчами против детекта автоматизации.
 # Если он не установлен, используем обычный playwright (+ playwright-stealth, если есть).
 #   pip install patchright playwright-stealth
@@ -138,6 +144,9 @@ async def launch_context(p) -> BrowserContext:
         except Exception as e:
             last_err = e
             print(f"   ⚠️ {ch or 'по умолчанию'} не запустился: {str(e).splitlines()[0]}")
+    if "Executable doesn't exist" in str(last_err):
+        print("   ❌ Браузер не установлен там, где его ищет скрипт.")
+        print("      Build command: PLAYWRIGHT_BROWSERS_PATH=0 patchright install chromium")
     raise RuntimeError(f"Не удалось запустить ни один браузер: {last_err}")
 
 
